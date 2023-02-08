@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyc3"
-version = "0.0.1"
+version = "0.0.4"
 description = ""
 authors = ["Simon Warchol <simonwarchol@g.harvard.edu>"]
 readme = "README.md"
@@ -10,7 +10,7 @@ repository = "https://github.com/python-poetry/poetry"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-numpy = "^1.24.2"
+numpy = "^1.23.3"
 colorio = "^0.12.15"
 
 
