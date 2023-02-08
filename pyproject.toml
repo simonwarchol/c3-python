@@ -1,15 +1,15 @@
 [tool.poetry]
-name = "c3-python"
-version = "1.0.0"
+name = "c3py"
+version = "0.0.1"
 description = ""
 authors = ["Simon Warchol <simonwarchol@g.harvard.edu>"]
 readme = "README.md"
-packages = [{include = "c3_python"}]
+packages = [{include = "c3py"}]
 repository = "https://github.com/python-poetry/poetry"
 
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.8"
 numpy = "^1.24.2"
 colorio = "^0.12.15"
 
