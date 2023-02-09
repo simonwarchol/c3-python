@@ -1,17 +1,17 @@
 [tool.poetry]
 name = "pyc3"
-version = "0.0.9"
+version = "0.2.0"
 description = ""
 authors = ["Simon Warchol <simonwarchol@g.harvard.edu>"]
 readme = "README.md"
 packages = [{include = "pyc3"}]
-repository = "https://github.com/python-poetry/poetry"
+repository = "https://github.com/simonwarchol/pyc3"
 
 
 [tool.poetry.dependencies]
 python = "^3.8"
 numpy = "^1.21.6"
-colorio = "^0.12.15"
+colorutil = "^0.6.0"
 
 
 [build-system]

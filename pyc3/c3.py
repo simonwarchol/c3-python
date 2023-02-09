@@ -1,9 +1,8 @@
 import json
 import math
 from pathlib import Path
-
+import colorutil
 import numpy as np
-from colorio.cs import ColorCoordinates
 
 
 class c3:
@@ -109,9 +108,8 @@ class c3:
         palette = self.parse_palette(palette)
 
         def index(_c):
-            col = ColorCoordinates(np.copy(_c), "srgb1")
-            col.convert('cielab')
-            x = col.data
+            x = colorutil.srgb_to_lab(_c)
+
             L = 5 * round(x[0] / 5)
             a = 5 * round(x[1] / 5)
             b = 5 * round(x[2] / 5)
@@ -124,9 +122,7 @@ class c3:
             c = index(_x)
             h = (self.color_entropy(c) - self.minE) / (self.maxE - self.minE)
             t = self.color_related_terms(c, limit=color_term_limit)
-            _col = ColorCoordinates(np.copy(_x), "srgb1")
-            _col.convert('cielab')
-            z = _col.data
+            z = colorutil.srgb_to_lab(_x)
             z = str(math.trunc(z[0])) + ', ' + str(math.trunc(z[1])) + ', ' + str(math.trunc(z[2]))
             return {"x": _x, "c": c, "h": h, 'terms': t, "z": z}
 
