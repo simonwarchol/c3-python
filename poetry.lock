@@ -1,6 +1,6 @@
 [[package]]
 name = "colorutil"
-version = "0.6.0"
+version = "0.8.0"
 description = ""
 category = "main"
 optional = false
@@ -70,7 +70,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "flake8 (<5)", "pytest-co
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "d83f12fc74a8e3f63a21b68ab265b08774285561a1b75b081b5f2dfb51e883a6"
+content-hash = "bb0814be8511146c725b00d861646b9a0844689356791a6d3bff79021811567e"
 
 [metadata.files]
 colorutil = []
