@@ -1,8 +1,11 @@
 import json
 import math
 from pathlib import Path
+
 import colorutil
 import numpy as np
+# from line_profiler_pycharm import profile
+from tqdm import tqdm
 
 
 class c3:
@@ -58,7 +61,8 @@ class c3:
                 H += (p * math.log(p) / math.log(2))
         return H
 
-    def color_related_terms(self, c, limit=None, minCount=None):
+    # @profile
+    def color_related_terms(self, c, limit=None, minCount=None, salience_threshold=None):
         cc = c * self.W
         _list = []
         _sum = 0
@@ -66,10 +70,12 @@ class c3:
             if cc + w in self.T:
                 _sum += self.T[cc + w]
                 _list.append({'index': w, 'score': self.T[cc + w]})
-        if minCount is not None:
-            _list = filter(lambda x: self.termsCount[x.index] > minCount >= minCount, _list)
-        _list.sort(key=lambda x: x['score'], reverse=True)
         _list = [{'score': (x['score'] / _sum), 'index': x['index']} for x in _list]
+        if salience_threshold is not None:
+            _list = list(filter(lambda x: x['score'] > salience_threshold, _list))
+        if minCount is not None:
+            _list = list(filter(lambda x: self.termsCount[x.index] > minCount >= minCount, _list))
+        _list.sort(key=lambda x: x['score'], reverse=True)
         if limit is not None:
             _list = _list[:limit]
         return _list
@@ -159,3 +165,22 @@ class c3:
                 cosine_distance = 1 - self.color_cosine(data[i]['c'], data[j]['c'])
                 matrix[i, j] = matrix[j, i] = cosine_distance
         return matrix
+
+    # @profile
+    def get_color_salience_dict(self, salience_threshold=None, limit=10):
+        color_term_salience = {}
+        all_colors_lab = [[int(_c) for _c in c.split(',')] for c in self.map]
+        all_colors_srgb = colorutil.lab_to_srgb(np.array(all_colors_lab))
+        for i, c in tqdm(enumerate(self.map)):
+            color_index = self.map[c]
+            lab_array = np.array([int(c) for c in c.split(',')])
+            terms = self.color_related_terms(color_index, salience_threshold=salience_threshold, limit=10)
+            for t in terms:
+                term = self.terms[t['index']]
+                if term not in color_term_salience:
+                    color_term_salience[term] = []
+                color_term_salience[term].append(
+                    {'srgb_color': all_colors_srgb[i].tolist(), 'score': t['score'], 'lab_color': lab_array.tolist()})
+        for term in color_term_salience:
+            color_term_salience[term].sort(key=lambda x: x['score'], reverse=True)
+        return color_term_salience

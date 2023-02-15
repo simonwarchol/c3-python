@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyc3"
-version = "0.3.1"
+version = "0.3.2"
 description = ""
 authors = ["Simon Warchol <simonwarchol@g.harvard.edu>"]
 readme = "README.md"
@@ -12,8 +12,11 @@ repository = "https://github.com/simonwarchol/pyc3"
 python = "^3.8"
 numpy = "^1.21.6"
 colorutil = "^0.9.1"
+tqdm = "^4.64.1"
 
 
+[tool.poetry.dev-dependencies]
+line-profiler-pycharm = "^1.1.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
