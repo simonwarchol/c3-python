@@ -5,28 +5,24 @@ from pathlib import Path
 import colorutil
 import numpy as np
 # from line_profiler_pycharm import profile
+from sklearn.neighbors import BallTree
 from tqdm import tqdm
 
 
 class c3:
+    # @profile
     def __init__(self, data=(Path(__file__).parent / 'data' / 'xkcd' / 'c3_data.json').resolve()):
         self.minE = -4.5
         self.maxE = 0
         self.data = json.load(open(data))
-        self.color = []
-        for i in range(len(self.data['color']) // 3):
-            lab_color = {
-                'L': self.data['color'][i * 3],
-                'a': self.data['color'][i * 3 + 1],
-                'b': self.data['color'][i * 3 + 2]
-            }
-            self.color.append(lab_color)
+        self.color = np.array(self.data['color']).reshape(-1, 3)
         self.C = len(self.color)
         # parse terms
         self.terms = self.data['terms']
         self.W = len(self.terms)
         # parse count table
         self.T = {}
+        self.tempT = np.array(self.data['T']).reshape(-1, 2)
         for i in range(len(self.data['T']) // 2):
             self.T[self.data['T'][i * 2]] = self.data['T'][i * 2 + 1]
 
@@ -41,12 +37,13 @@ class c3:
             self.colorCount[c] += v
             self.termsCount[w] += v
         self.A = self.data['A']
+        self.tree = BallTree(np.array(self.color), metric='euclidean')
         self.map = {}
         for c in range(self.C):
             x = self.color[c]
-            s = ','.join([str(x['L']), str(x['a']), str(x['b'])])
+            test = ",".join(x.astype(str))
+            s = ','.join([str(x[0]), str(x[1]), str(x[2])])
             self.map[s] = c
-        test = ''
 
     def color_entropy(self, c):
         H = 0
@@ -106,6 +103,14 @@ class c3:
             palette = [hex_to_rgb(c) for c in palette]
         return palette
 
+    def color_index(self, _c):
+        x = colorutil.srgb_to_lab(_c)
+        return self.tree.query(x.reshape(1, -1), k=1)[1][0][0]
+
+        # def index(_c):
+        #     x = colorutil.srgb_to_lab(_c)
+        #
+
     # palette is list of hex colors
     def analyze_palette(self, palette, color_term_limit=1):
 
@@ -113,19 +118,8 @@ class c3:
 
         palette = self.parse_palette(palette)
 
-        def index(_c):
-            x = colorutil.srgb_to_lab(_c)
-
-            L = 5 * round(x[0] / 5)
-            a = 5 * round(x[1] / 5)
-            b = 5 * round(x[2] / 5)
-            s = ",".join([str(x) for x in [L, a, b]])
-            if s in self.map:
-                return self.map[s]
-            return None
-
         def color(_x, color_term_limit=1):
-            c = index(_x)
+            c = self.color_index(_x)
             h = (self.color_entropy(c) - self.minE) / (self.maxE - self.minE)
             t = self.color_related_terms(c, limit=color_term_limit)
             z = colorutil.srgb_to_lab(_x)
