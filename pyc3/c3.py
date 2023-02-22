@@ -4,10 +4,10 @@ from pathlib import Path
 
 import colorutil
 import numpy as np
-# from line_profiler_pycharm import profile
+from line_profiler_pycharm import profile
 from sklearn.neighbors import BallTree
 from tqdm import tqdm
-
+from scipy.spatial.distance import squareform
 
 class c3:
     # @profile
@@ -28,6 +28,7 @@ class c3:
 
         self.colorCount = [0 for i in range(self.C)]
         self.termsCount = [0 for i in range(self.W)]
+        self.cosine_matrix = squareform(np.load((Path(__file__).parent / 'data' / 'xkcd' / 'cosine_distances_square.npy').resolve()))
         for t in self.T:
             c = math.floor(t / self.W)
             w = math.floor(t % self.W)
@@ -104,8 +105,7 @@ class c3:
         return palette
 
     def color_index(self, _c):
-        x = colorutil.srgb_to_lab(_c)
-        return self.tree.query(x.reshape(1, -1), k=1)[1][0][0]
+        return self.tree.query(_c.reshape(1, -1), k=1)[1][0][0]
 
         # def index(_c):
         #     x = colorutil.srgb_to_lab(_c)
@@ -116,19 +116,21 @@ class c3:
 
         # If list of string, convert to RGB list
 
-        palette = self.parse_palette(palette)
 
         def color(_x, color_term_limit=1):
             c = self.color_index(_x)
             h = (self.color_entropy(c) - self.minE) / (self.maxE - self.minE)
             t = self.color_related_terms(c, limit=color_term_limit)
-            z = colorutil.srgb_to_lab(_x)
-            z = str(math.trunc(z[0])) + ', ' + str(math.trunc(z[1])) + ', ' + str(math.trunc(z[2]))
-            return {"x": _x, "c": c, "h": h, 'terms': t, "z": z}
+            return {"x": _x, "c": c, "h": h, 'terms': t}
 
         data = [color(x, color_term_limit=color_term_limit) for x in palette]
         return data
 
+    def palette_indices(self, palette):
+        palette = self.parse_palette(palette)
+        return [{'c': self.color_index(x)} for x in palette]
+
+    # @profile
     def analyze(self, palette, color_term_limit=1):
         data = self.analyze_palette(palette, color_term_limit)
         color_name_distance_matrix = self.compute_color_name_distance_matrix(data)
@@ -141,14 +143,13 @@ class c3:
             obj = {}
             obj['color'] = palette[i]
             obj['rgb'] = [int(x * 255) for x in data[i]['x'].tolist()]
-            obj['lab'] = [int(x.strip()) for x in data[i]['z'].split(',')]
             obj['salience'] = data[i]['h']
             obj['terms'] = [{'p': x['score'], 'name': self.terms[x['index']]} for x in data[i]['terms']]
             clean_data.append(obj)
         return clean_data
 
     def color_name_distance_matrix(self, palette):
-        data = self.analyze_palette(palette)
+        data = self.palette_indices(palette)
         return self.compute_color_name_distance_matrix(data)
 
     def compute_color_name_distance_matrix(self, data):
@@ -156,7 +157,7 @@ class c3:
         matrix = np.zeros((len(data), len(data)))
         for i in range(0, len(data)):
             for j in range(0, i):
-                cosine_distance = 1 - self.color_cosine(data[i]['c'], data[j]['c'])
+                cosine_distance = self.cosine_matrix[data[i]['c'], data[j]['c']]
                 matrix[i, j] = matrix[j, i] = cosine_distance
         return matrix
 
@@ -178,3 +179,32 @@ class c3:
         for term in color_term_salience:
             color_term_salience[term].sort(key=lambda x: x['score'], reverse=True)
         return color_term_salience
+
+    def get_most_salient_colors(self, salience_threshold=None, limit=10):
+        color_term_salience = self.get_color_salience_dict(salience_threshold=salience_threshold, limit=limit)
+        color_term_salience_most_salient = [[k, np.mean([x['score'] for x in v[0:10]])] for k, v in
+                                            color_term_salience.items()]
+        sorted_color_term_salience_most_salient = sorted(color_term_salience_most_salient, key=lambda x: x[1],
+                                                         reverse=True)
+        return sorted_color_term_salience_most_salient
+
+
+    def precompute_cosine_distances(self):
+        self.cosine_distances = np.zeros((self.C, self.C))
+        for i in tqdm(range(0, self.C)):
+            for j in range(0, i):
+                cosine_distance = 1 - self.color_cosine(i, j)
+                self.cosine_distances[i, j] = self.cosine_distances[j, i] = cosine_distance
+        np.save('cosine_distances.npy', self.cosine_distances)
+
+    def load_cosine_dist(self):
+        matrix = np.load('cosine_distances.npy')
+        # Save as 16bit float
+        matrix = matrix.astype(np.float32)
+        np.save('cosine_distances_32.npy', matrix)
+        matrix = matrix.astype(np.float16)
+        np.save('cosine_distances_16.npy', matrix)
+        tosquare = squareform(matrix)
+        np.save('cosine_distances_square.npy', tosquare)
+        fromsquare = squareform(tosquare)
+        test = ''

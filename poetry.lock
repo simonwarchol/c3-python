@@ -176,7 +176,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "flake8 (<5)", "pytest-co
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "daa4370c649d1c5beec841d8eded50dc855661c8bc2bc9593418bd209b73d618"
+content-hash = "2b7cd70bbb8d239a3bd832dd93e48e8a4f84fb710fde2b4f8354b28649936a42"
 
 [metadata.files]
 colorama = []
